@@ -1,0 +1,18 @@
+{
+  "name": "mystt",
+  "version": "0.0.1",
+  "description": "My speech-to-text",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "yskszk63",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "@google-cloud/speech": "^3.5.4",
+    "dotenv": "^8.2.0",
+    "koa": "^2.11.0",
+    "koa-static": "^5.0.0",
+    "koa-websocket": "^6.0.0"
+  }
+}
