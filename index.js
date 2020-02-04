@@ -8,6 +8,7 @@ const websockify = require('koa-websocket');
 const speech = require('@google-cloud/speech');
 
 const app = websockify(new Koa());
+const client = new_speech_client();
 
 app.use(serve("client"));
 
@@ -47,7 +48,6 @@ app.ws.use(async cx => {
         interimResults: false,
     };
 
-    const client = new speech.SpeechClient();
     const recognizer = client
         .streamingRecognize(request)
         .on('error', console.error)
@@ -63,5 +63,14 @@ app.ws.use(async cx => {
         client.close();
     });
 });
+
+function new_speech_client() {
+    if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+        return new speech.SpeechClient();
+    } else if (process.env.GOOGLE_CREDENTIALS) {
+        const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+        return new speech.SpeechClient({credentials});
+    }
+}
 
 app.listen(process.env.PORT || 8080);
