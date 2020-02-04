@@ -60,7 +60,6 @@ app.ws.use(async cx => {
     });
     cx.websocket.on('close', () => {
         recognizer.end();
-        client.close();
     });
 });
 
