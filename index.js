@@ -64,4 +64,4 @@ app.ws.use(async cx => {
     });
 });
 
-app.listen(8080);
+app.listen(process.env.PORT || 8080);
