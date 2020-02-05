@@ -2,8 +2,29 @@
 <html>
   <head>
     <title>My speech-to-text</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.0/css/all.min.css" />
+    <style>
+nav button {
+  font-size: 32px;
+  visibility: hidden;
+}
+body.state-suspended nav button#resume {
+  visibility: visible;
+}
+body.state-running nav button#stop {
+  visibility: visible;
+}
+    </style>
   </head>
   <body>
+    <nav>
+      <button type="button" id="resume">
+        <i class="fas fa-microphone"></i>
+      </button>
+      <button type="button" id="stop">
+        <i class="fas fa-stop"></i>
+      </button>
+    </nav>
     <output></output>
     <script>
 (() => {
@@ -78,6 +99,20 @@
         });
         document.querySelector('output').append(p);
       }
+    });
+    ws.addEventListener('close', _ => {
+      audiocx.close();
+    });
+
+    document.querySelector('body').className = `state-${audiocx.state}`;
+    audiocx.addEventListener('statechange', _ => {
+      document.querySelector('body').className = `state-${audiocx.state}`;
+    });
+    document.querySelector('#resume').addEventListener('click', _ => {
+      audiocx.resume();
+    });
+    document.querySelector('#stop').addEventListener('click', _ => {
+      audiocx.suspend();
     });
 
     /*

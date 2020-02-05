@@ -50,7 +50,10 @@ app.ws.use(async cx => {
 
     const recognizer = client
         .streamingRecognize(request)
-        .on('error', console.error)
+        .on('error', e => {
+            console.error(e);
+            cx.websocket.close();
+        })
         .on('data', m => {
             cx.websocket.send(JSON.stringify(m));
         });
