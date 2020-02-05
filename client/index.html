@@ -52,14 +52,14 @@ body.state-running nav button#stop {
     const mic = await navigator.mediaDevices.getUserMedia({audio: true});
     const micsrc = audiocx.createMediaStreamSource(mic);
 
-    const scriptnode = audiocx.createScriptProcessor(4096, 1, 0);
+    const scriptnode = audiocx.createScriptProcessor(4096, 1, 1);
     scriptnode.addEventListener('audioprocess', evt => {
-      console.log(evt);
       const input = evt.inputBuffer.getChannelData(0);
       const pcm = to_16bit_pcm(input);
       ws.send(pcm);
     });
     micsrc.connect(scriptnode);
+    scriptnode.connect(audiocx.destination);
 
     const ws = new WebSocket(resolveWebsocketurl(audiocx.sampleRate));
     ws.addEventListener('message', evt => {
