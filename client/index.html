@@ -34,7 +34,6 @@ body.state-running nav button#stop {
     return `${usetls? 'wss': 'ws'}://${host}/?sampleRate=${sampleRate}`;
   }
 
-
   function to_16bit_pcm(farray) {
     const result = new ArrayBuffer(farray.length * 2);
     const view = new DataView(result);
@@ -47,46 +46,19 @@ body.state-running nav button#stop {
     return result;
   }
 
-  /*
-  function pack_wav(chunks) {
-    const len = chunks.map(e => e.byteLength).reduce((l, r) => l + r, 0);
-
-    // http://soundfile.sapp.org/doc/WaveFormat/
-    const header = new DataView(new ArrayBuffer(44));
-    header.setUint32(0, 0x52494646, false); // ChunkID 'RIFF'
-    header.setUint32(4, 32 + len, true); // ChunkSize
-    header.setUint32(8, 0x57415645, false); // Format 'WAVE'
-
-    // 'fmt '
-    header.setUint32(12, 0x666d7420, false); // Subchunk1ID 'fmt '
-    header.setUint32(16, 16, true); // Subchunk1Size
-    header.setUint16(20, 1, true); // AudioFormat PCM
-    header.setUint16(22, 1, true); // NumChannels Mono
-    header.setUint32(24, 16000, true); // SampleRate
-    header.setUint32(28, 16000 * 1 * 2, true); // ByteRate
-    header.setUint16(32, 2, true); // BlockAlign
-    header.setUint16(34, 16, true); // BitsPerSample
-
-    // 'data'
-    header.setUint32(36, 0x64617461, false); // Subchunk2ID 'data'
-    header.setUint32(40, len, true); // ChunkSize
-
-    return new Blob([header.buffer, ...chunks]);
-  }
-  */
-
-  (async () => {
-    const audiocx = new AudioContext();
+  let audiocx;
+  async function resume() {
+    audiocx = new AudioContext();
     const mic = await navigator.mediaDevices.getUserMedia({audio: true});
     const micsrc = audiocx.createMediaStreamSource(mic);
 
     const scriptnode = audiocx.createScriptProcessor(4096, 1, 0);
     scriptnode.addEventListener('audioprocess', evt => {
+      console.log(evt);
       const input = evt.inputBuffer.getChannelData(0);
       const pcm = to_16bit_pcm(input);
       ws.send(pcm);
     });
-
     micsrc.connect(scriptnode);
 
     const ws = new WebSocket(resolveWebsocketurl(audiocx.sampleRate));
@@ -101,31 +73,33 @@ body.state-running nav button#stop {
       }
     });
     ws.addEventListener('close', _ => {
-      audiocx.close();
+      if (audiocx) {
+        audiocx.close();
+      }
     });
 
-    document.querySelector('body').className = `state-${audiocx.state}`;
     audiocx.addEventListener('statechange', _ => {
-      document.querySelector('body').className = `state-${audiocx.state}`;
+      if (audiocx && audiocx.state == 'close') {
+        ws.close();
+      }
     });
-    document.querySelector('#resume').addEventListener('click', _ => {
-      audiocx.resume();
-    });
-    document.querySelector('#stop').addEventListener('click', _ => {
-      audiocx.suspend();
-    });
+    document.querySelector('body').className = "state-running";
+  }
 
-    /*
-    MediaRecorder no raw encode supported.
-    const mic = await navigator.mediaDevices.getUserMedia({audio: true});
-    const recorder = new MediaRecorder(mic);
-    recorder.addEventListener('dataavailable', evt => {
-      console.log(evt);
-    });
-    recorder.start(1000);
-    console.log("START");
-    */
-  })();
+  function suspend() {
+    audiocx.close();
+    audiocx = null;
+    document.querySelector('body').className = "state-suspended";
+  }
+
+  document.querySelector('body').className = "state-suspended";
+  document.querySelector('#resume').addEventListener('click', _ => {
+    resume();
+  });
+  document.querySelector('#stop').addEventListener('click', _ => {
+    suspend();
+  });
+
 })();
     </script>
   </body>
